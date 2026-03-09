@@ -1,8 +1,7 @@
 # fgu-ki-gever
 
-Kurzbeschreibung des Projekts.
+This is my Readme
 
-## Dokumentation
-
-- Arbeitsregeln: `docs/working-rules.md`
-- Architekturentscheidungen: `docs/architecture.md`
+## Docs
+- `docs/working-rules.md`
+- `docs/architecture.md`
