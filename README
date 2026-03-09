@@ -1,1 +1,64 @@
-This is my Readme  
+# fgu-ki-gever
+
+Einfache Deploy-Skripte für eine einzelne Hetzner-VM mit Docker Compose.
+Der Fokus liegt auf einem experimentellen Betrieb (ohne Domain, Reverse Proxy oder TLS-Automation).
+
+## Voraussetzungen auf dem Server
+
+- Linux-VM (z. B. Hetzner Cloud)
+- Docker Engine + Docker Compose Plugin (`docker compose`)
+- Dieses Repository auf dem Server ausgecheckt
+
+## 1) Produktions-Environment vorbereiten
+
+```bash
+cp infra/env/prod.env.example infra/env/prod.env
+nano infra/env/prod.env
+```
+
+Wichtige Variablen in `infra/env/prod.env`:
+
+- `COMPOSE_PROJECT_NAME`: Compose-Projektname
+- `COMPOSE_FILE`: Pfad zur Compose-Datei
+- `DJANGO_SERVICE`: Service-Name für Django (z. B. `web`)
+- `DJANGO_MIGRATE_CMD`: Migrationskommando (Standard: `python manage.py migrate --noinput`)
+- `DB_SERVICE`: Datenbank-Service in Compose (Standard: `db`)
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`: DB-Zugangsdaten
+- `BACKUP_DIR`: Zielordner für Backups
+
+## 2) Deploy ausführen
+
+```bash
+chmod +x infra/deploy/deploy.sh infra/deploy/backup.sh
+./infra/deploy/deploy.sh
+```
+
+Das Deploy-Skript führt in dieser Reihenfolge aus:
+
+1. `docker compose pull`
+2. `docker compose build`
+3. `docker compose up -d --remove-orphans`
+4. Django-Migrationen via `docker compose run --rm <DJANGO_SERVICE> ...`
+
+Damit ist das Deployment "idempotent genug" für wiederholte Ausführung: erneute Läufe ziehen neue Images, bauen neu, aktualisieren laufende Container und führen Migrationen erneut sicher aus.
+
+## 3) Datenbank-Backup erstellen
+
+```bash
+./infra/deploy/backup.sh
+```
+
+Das Skript erstellt ein komprimiertes PostgreSQL-Dump unter `BACKUP_DIR`, z. B.:
+
+- `backups/db-YYYYMMDD-HHMMSS.sql.gz`
+
+## Beispiel-Ablauf auf einer frischen VM
+
+```bash
+git clone <repo-url>
+cd fgu-ki-gever
+cp infra/env/prod.env.example infra/env/prod.env
+# Werte in prod.env setzen
+chmod +x infra/deploy/deploy.sh infra/deploy/backup.sh
+./infra/deploy/deploy.sh
+```
