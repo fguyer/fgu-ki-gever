@@ -1,5 +1,11 @@
 # fgu-ki-gever
 
+This is my Readme
+
+## Docs
+- `docs/working-rules.md`
+- `docs/architecture.md`
+=======
 Einfache Deploy-Skripte für eine einzelne Hetzner-VM mit Docker Compose.
 Der Fokus liegt auf einem experimentellen Betrieb (ohne Domain, Reverse Proxy oder TLS-Automation).
 
