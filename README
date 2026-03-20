@@ -1,13 +1,21 @@
 # fgu-ki-gever
 
-This is my Readme
+Erster Full-Stack-Wurf für eine GEVER-orientierte Anwendung mit Django-Backend, React-Frontend und Docker-Compose-Deployment auf einer einzelnen Hetzner-VM. Das Setup ist auf einen einfachen, nachvollziehbaren Produktionsbetrieb ohne zusätzliche Orchestrierung ausgelegt. 
 
-## Docs
+## Dokumentation
+
 - `docs/working-rules.md`
 - `docs/architecture.md`
-=======
-Einfache Deploy-Skripte für eine einzelne Hetzner-VM mit Docker Compose.
-Der Fokus liegt auf einem experimentellen Betrieb (ohne Domain, Reverse Proxy oder TLS-Automation).
+
+## Produktions-Setup auf Hetzner
+
+Die Produktionsarchitektur nutzt drei Container:
+
+- `frontend`: baut das React/Vite-Frontend und liefert es via Nginx aus
+- `backend`: betreibt Django via Gunicorn
+- `postgres`: persistente PostgreSQL-Datenbank
+
+Der Frontend-Container terminiert den eingehenden HTTP-Traffic und leitet `/api/*` intern an das Backend weiter. Dadurch laufen Frontend und API im Browser unter derselben Origin, sodass kein separates CORS-Setup nötig ist. 
 
 ## Voraussetzungen auf dem Server
 
@@ -24,13 +32,15 @@ nano infra/env/prod.env
 
 Wichtige Variablen in `infra/env/prod.env`:
 
-- `COMPOSE_PROJECT_NAME`: Compose-Projektname
-- `COMPOSE_FILE`: Pfad zur Compose-Datei
-- `DJANGO_SERVICE`: Service-Name für Django (z. B. `web`)
-- `DJANGO_MIGRATE_CMD`: Migrationskommando (Standard: `python manage.py migrate --noinput`)
-- `DB_SERVICE`: Datenbank-Service in Compose (Standard: `db`)
-- `DB_NAME`, `DB_USER`, `DB_PASSWORD`: DB-Zugangsdaten
-- `BACKUP_DIR`: Zielordner für Backups
+- `DJANGO_SERVICE`: Compose-Service für Django/Gunicorn (`backend`)
+- `DJANGO_MIGRATE_CMD`: Migrationskommando
+- `DJANGO_COLLECTSTATIC_CMD`: Kommando für statische Assets
+- `DJANGO_SECRET_KEY`: produktiver Django-Secret-Key
+- `DJANGO_ALLOWED_HOSTS`: Server-IP und/oder Domain
+- `DJANGO_CSRF_TRUSTED_ORIGINS`: vertrauenswürdige Origins für Form-Posts
+- `POSTGRES_*`: Datenbankzugang für den App-Container
+- `DB_*`: Datenbankzugang für das Backup-Skript
+- `VITE_API_BASE_URL`: API-Basis-URL für den Frontend-Build (Standard: `/api`)
 
 ## 2) Deploy ausführen
 
@@ -44,9 +54,8 @@ Das Deploy-Skript führt in dieser Reihenfolge aus:
 1. `docker compose pull`
 2. `docker compose build`
 3. `docker compose up -d --remove-orphans`
-4. Django-Migrationen via `docker compose run --rm <DJANGO_SERVICE> ...`
-
-Damit ist das Deployment "idempotent genug" für wiederholte Ausführung: erneute Läufe ziehen neue Images, bauen neu, aktualisieren laufende Container und führen Migrationen erneut sicher aus.
+4. Django-Migrationen via `docker compose exec -T backend ...`
+5. `collectstatic` im Backend-Container
 
 ## 3) Datenbank-Backup erstellen
 

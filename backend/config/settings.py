@@ -1,11 +1,22 @@
 from pathlib import Path
 import os
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_bool(name: str, default: bool = False) -> bool:
+    return os.getenv(name, '1' if default else '0').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+DEBUG = env_bool('DJANGO_DEBUG', default=False)
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me')
-DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
-ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',') if host]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -80,3 +91,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+if not DEBUG:
+    SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+    SECURE_HSTS_PRELOAD = env_bool('DJANGO_SECURE_HSTS_PRELOAD', default=True)
+    SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', default=False)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

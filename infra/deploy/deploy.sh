@@ -7,8 +7,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ENV_FILE="${ENV_FILE:-$REPO_ROOT/infra/env/prod.env}"
 COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/docker-compose.yml}"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-fgu-ki-gever}"
-DJANGO_SERVICE="${DJANGO_SERVICE:-web}"
+DJANGO_SERVICE="${DJANGO_SERVICE:-backend}"
 DJANGO_MIGRATE_CMD="${DJANGO_MIGRATE_CMD:-python manage.py migrate --noinput}"
+DJANGO_COLLECTSTATIC_CMD="${DJANGO_COLLECTSTATIC_CMD:-python manage.py collectstatic --noinput}"
 
 if [[ ! -f "$COMPOSE_FILE" ]]; then
   echo "[deploy] docker compose file not found: $COMPOSE_FILE" >&2
@@ -35,6 +36,9 @@ echo "[deploy] Starting or updating containers..."
 "${compose_cmd[@]}" up -d --remove-orphans
 
 echo "[deploy] Running Django migrations (${DJANGO_SERVICE})..."
-"${compose_cmd[@]}" run --rm "$DJANGO_SERVICE" sh -c "$DJANGO_MIGRATE_CMD"
+"${compose_cmd[@]}" exec -T "$DJANGO_SERVICE" sh -c "$DJANGO_MIGRATE_CMD"
+
+echo "[deploy] Collecting static assets (${DJANGO_SERVICE})..."
+"${compose_cmd[@]}" exec -T "$DJANGO_SERVICE" sh -c "$DJANGO_COLLECTSTATIC_CMD"
 
 echo "[deploy] Deployment completed successfully."
