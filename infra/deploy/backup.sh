@@ -8,7 +8,7 @@ ENV_FILE="${ENV_FILE:-$REPO_ROOT/infra/env/prod.env}"
 COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/docker-compose.yml}"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-fgu-ki-gever}"
 
-DB_SERVICE="${DB_SERVICE:-db}"
+DB_SERVICE="${DB_SERVICE:-postgres}"
 DB_NAME="${DB_NAME:-}"
 DB_USER="${DB_USER:-}"
 BACKUP_DIR="${BACKUP_DIR:-$REPO_ROOT/backups}"
